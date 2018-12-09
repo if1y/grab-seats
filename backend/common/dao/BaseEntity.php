@@ -3,7 +3,7 @@ class BaseEntity {
 
     protected $tableName;
     protected $_fields;
-    protected $row;
+    public    $row;
     public    $isNewRecord = true;
     public function get($id) {
         $dbhandler = $this->getReadDb();
@@ -21,8 +21,9 @@ class BaseEntity {
     }
     
     public function save() {
-        if ($this->isNewRecord) {
-            return $this->getWriteDb()->addRow($this->tableName, $this->row);
+        if ($this->isNewRecord) { 
+            $this->row['created'] = time();
+            return $this->getWriteDb()->addTableRow($this->tableName, $this->row);
         } else {
             return $this->getWriteDb()->updateTable($this->tableName, $this->row, $this->row['id']);
         }

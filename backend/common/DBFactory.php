@@ -5,7 +5,7 @@ require_once "DBHandler.php";
 class DBFactory {
 
     static $dbHanlders = [];
-    public static function getWriterDb() {
+    public static function getWriteDb() {
         global $CFG;
         return self::getHanlder($CFG['db']) ;
     }

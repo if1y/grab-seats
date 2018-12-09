@@ -34,7 +34,7 @@ class DBHanlder {
             } catch (PDOException $e) {
                 
                 if (function_exists('addLog')) {
-                    addLog ( 'Connection failed: ' . $e->getMessage());
+                    $this->addLog ( 'Connection failed: ' . $e->getMessage());
                 }
                 
                
@@ -70,7 +70,7 @@ class DBHanlder {
             return $pdo->lastInsertId();
         } else {
             $str = json_encode($stm->errorInfo(), JSON_UNESCAPED_UNICODE);
-            addLog ( "insert [{$tableName}] failed: " . $str, "db_error");
+            $this->addLog ( "insert [{$tableName}] failed: " . $str, "db_error");
         }
         return false;
     }
@@ -97,7 +97,7 @@ class DBHanlder {
         $ret = $stm->execute();
         if ($ret === false) {
             //执行出错了
-            addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error");
+            $this->addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error");
 
         }
         return $stm->fetch(PDO::FETCH_ASSOC);
@@ -115,7 +115,7 @@ class DBHanlder {
         $ret = $stm->execute();
         if ($ret === false) {
             //执行出错了
-            addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error");
+            $this->addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error");
         }
         return $ret;
     }
@@ -132,7 +132,7 @@ class DBHanlder {
         if ($ret === false) {
             //执行出错了
      
-            addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error");
+            $this->addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error");
 
         }
         return $stm->fetchAll($fetchMode);
@@ -190,7 +190,7 @@ class DBHanlder {
         if ($ret === false) {
             //执行出错了
           
-            addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error");
+            $this->addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error");
            
         }
         return $ret;

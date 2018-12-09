@@ -2,8 +2,15 @@
 require_once "common/bootstrap.php";
 
 $authcode = isset($_POST['authcode']) ? $_POST['authcode'] : -1;
-if (!isset($_SESSION['authcode']) || $authcode != $_SESSION['authcode']) {
-    R(41, "请输入验证码");
+$sessionCode = isset($_SESSION['authcode']) ? $_SESSION['authcode'] : null;
+
+if ($sessionCode) {
+    //你要重新刷新验证码了
+    unset($_SESSION['authcode']);
+}
+if ($sessionCode != $authcode) {
+    
+    R(41, "请输入正确验证码");
 }
 
 //检查用户
@@ -20,7 +27,7 @@ if ($user->row == false) {
 } 
 
 //检查密码
-$encryPwd = encodePassword($_POST['account']);
+$encryPwd = encodePassword($_POST['password']);
 if ($user->row['password'] != passCrypt($encryPwd, $user->row['salt'])) {
    //密码错误
    R(502, "密码错误");

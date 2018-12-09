@@ -1,6 +1,6 @@
 <?php 
 require_once "common/bootstrap.php";
-accertLogin();
+assertLogin();
 
 $data = [
     'account' => $_SESSION['account'],

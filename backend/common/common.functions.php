@@ -40,9 +40,9 @@ function passCrypt ($md5Pwd, $salt) {
     return md5($md5Pwd.$salt);
 }
 
-function accertLogin() {
+function assertLogin() {
     if (!isLogin()) {
-        reponseJson(32, "请先登录", uniqid());
+        reponseJson(32, "请先登录", time());
     }
 }
 
@@ -51,8 +51,8 @@ function genUUID() {
     $time = time(); //10位
     $redis = RedisFactory::getInstance();
     $counterKey = "counter:global";
-    $nId = $redis->inrc($counterKey);
-    return $time + $nId;
+    $nId = $redis->incr($counterKey);
+    return "U". ($time + $nId);
 }
 
 function getParamsKey($params) {

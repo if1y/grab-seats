@@ -7,7 +7,7 @@ create table `tx_exam`.`tx_users` (
     id char(36) not null primary key,
     account varchar(80) not null comment "帐号",
     password char(32) not null comment "密码",
-    salt char(8) not null ,
+    salt char(16) not null ,
     created int not null default 0,
     UNIQUE KEY  account(account)
 ) ENGINE = InnoDB comment = "用户表";
@@ -26,9 +26,10 @@ create table `tx_exam`.`tx_stage` (
 create table `tx_exam`.`tx_stage_seats`(
     id char(36) not null primary key ,
     stage_id char(36) not null comment "舞台id",
-    group_tag varchar(10) not null comment "作为属于的组",
+    group_tag varchar(10) not null default 'default' comment "作为属于的组",
     row_idx int not null comment "行号",
     col_numbs int not null comment "座位数",
+    created int not null comment "创建时间",
     key (stage_id)
 ) ENGINE = InnoDB comment = "舞台座位表";
 
@@ -49,8 +50,8 @@ create table `tx_exam`.`tx_events` (
 
 
 
---- 用户座位表，event_id  seat_info 确定唯一的座次
---- seat_info :  group_tag:row:col  
+-- 用户座位表，event_id  seat_info 确定唯一的座次
+-- seat_info :  group_tag:row:col  
 create table `tx_exam`.`tx_user_seats` (
    id char(36) not null primary key,
    account varchar(64) not null comment "用户帐号",
