@@ -1,5 +1,6 @@
 <?php 
 define ("COMMON_PATH", __DIR__);
+ini_set('magic_quotes_gpc', 'Off');
 require_once "Consts.php";
 require_once "config.php";
 require_once "Exceptions.php";

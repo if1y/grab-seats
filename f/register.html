@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>注册</title>
+    <link href="bootstrap-3.3.7/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container" style="width: 320px; margin-top:120px;">
+     <div class="row">
+        <h3>注册</h3>
+     </div>
+    <div class="row">
+  
+          <div class="form-group">
+            <label >帐号</label>
+            <input type="text" class="form-control" id="account" placeholder="以英文字母开头,4-48位英文字母或数字">
+          </div>
+          <div class="form-group">
+            <label >密码</label>
+            <input type="password" class="form-control" id="passwd1" placeholder="密码长度不小6">
+          </div>
+          <div class="form-group">
+            <label >确认密码</label>
+            <input type="password" class="form-control" id="passwd2" maxlength="48" placeholder="密码长度不小6">
+          </div>
+          <div class="form-group">
+            <label >验证码</label>
+            
+            <div class="input-group">
+                <input name="authcode" id="autocode" placeholder="请输入验证码">
+                <img id="authPic" title="点击刷新验证码" style="cursor:pointer;">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="submit">提交</button>
+
+        </div>
+    </div>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/init.js"></script>
+    <script src="bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script>
+        $(function(){
+            
+            function checkAccount(acc) {
+                var pattern = /^[a-zA-Z][a-zA-Z0-9]{3,48}$/;
+                return pattern.test(acc);
+            }
+            $("#submit").click(function(){
+                var account  = $.trim($("#account").val());
+                var password = $.trim($("#passwd1").val());
+                var password2 = $("#passwd2").val();
+                var authCode = $("#autocode").val();
+                if (!account) {$.alert("帐号不能为空");return;}
+                if (!checkAccount(account)) {
+                    $.alert("帐号必须以英文字母开头,4-48位英文字母或数字");return;
+                }
+                if (password.length < 4 || password.length > 48) {
+                    $.alert("密码长度6-48位字符");
+                }
+                if (password != password2) {$.alert("两次密码不一致");return;};
+                if (!password) {$.alert("密码不能为空");return;}
+                if (!authCode) {$.alert("验证码不能为空");return;}
+                var data = {account:account,password:password,authcode:authCode};
+                $.post("../backend/register.php" , data, function(data) {
+                    $.alert(data.message);
+                    
+                    if (data.code == 0) {
+                        //登录成功，去首页
+                        location.href="login.html";
+                    }
+                    $("#authPic").trigger("click");
+                },"json")
+            });
+            
+            $("#authPic").click(function(){
+                $(this).prop("src", "../backend/captcha.php?v" + Math.random(1,1000000))
+            }).trigger('click');
+            
+            
+        });
+        
+        
+    </script>
+  </body>
+</html>
