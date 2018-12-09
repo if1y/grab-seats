@@ -12,7 +12,7 @@ function reponseJson($code, $message, $data = null) {
 }
 
 function R($code, $message, $data = null) {
-    reponseJson($code, $message, $data = null);
+    reponseJson($code, $message, $data);
 }
 
 function isLogin() {
@@ -68,4 +68,40 @@ function getParamsKey($params) {
     }
     
     return md5($key);
+}
+
+/**
+ * 接口限速，统一ip，每秒只能N次请求
+ **/
+function rateLimter($ip , $times = 20) {
+    $redis = RedisFactory::getInstance();
+    $key = "Limiter:$ip";
+    $expire = 1; //1秒
+    $cnt = $redis->incr($key);
+    if ($cnt > $times) {
+        $redis->expire($key, 2); //暂停2秒
+        reponseJson(-1,"请求太频繁了,2秒后重试");
+    }
+    if ($cnt == 1) {
+        $redis->expire($key, 1);
+    }
+    
+    return true;
+    
+}
+
+function getUserIp() {
+    if (getenv("HTTP_X_FORWARDED_FOR")){
+        $ip = getenv("HTTP_X_FORWARDED_FOR");
+    }
+    elseif (getenv("HTTP_CLIENT_IP")){
+        $ip = getenv("HTTP_CLIENT_IP");
+    }
+    elseif (getenv("REMOTE_ADDR")){
+        $ip = getenv("REMOTE_ADDR");
+    } else {
+       $ip = false;
+    }
+    
+    return $ip;
 }

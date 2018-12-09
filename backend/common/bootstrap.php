@@ -1,5 +1,6 @@
 <?php 
 define ("COMMON_PATH", __DIR__);
+ini_set("date.timezone","Asia/shanghai");
 ini_set('magic_quotes_gpc', 'Off');
 require_once "Consts.php";
 require_once "config.php";
@@ -27,4 +28,9 @@ function exceptionHandler($e) {
     reponseJson($code, $e->getMessage(), null);
 }
 //set_exception_handler("exceptionHandler");
+
+
+//限速相关
+$ip = getUserIp();
+rateLimter(ip2long($ip), 10);
 session_start();

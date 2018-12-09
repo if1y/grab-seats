@@ -29,6 +29,19 @@ class BaseEntity {
         }
     }
     
+    /**
+     * 获取列表
+     * $where 筛选条件 
+     * $conds 参数
+     **/
+    public function fetchList($where, $conds) {
+        $sql = "select " . $this->_fields . " from ".$this->tableName ;
+        if ($where) {
+            $sql .= " where ". $where;
+        }
+        return $this->getWriteDb()->fetchRowAll($sql, $conds);
+    }
+    
     public function getReadDb() {
         return DBFactory::getReadDb();
     }
