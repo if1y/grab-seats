@@ -33,8 +33,9 @@ $event->row = [
     'end_time' => strtotime('2019-01-02 23:30:00'),
 ];
 $event->save();
-//长生作为
+//产生座位
 $groups = ['A', 'B', 'C'];
+$seatsInfo = [];
 foreach ($groups as $k => $v) {
     $rowid = 0;
     for ($i = 50; $i <= 100; $i += 2) {
@@ -47,8 +48,23 @@ foreach ($groups as $k => $v) {
             'row_idx' => $rowid,
             'col_numbs' => $i,
         ];
+        $seatsInfo[] = $stageSeat->row;
         $stageSeat->save();
     }
+}
+//初始化,将活动的座位录入队列中
+$eventSeatsQueueKey = "queue:$eventId";
+if (!$redis->exists($eventSeatsQueueKey)) {
+    //初始化抢座队列
+    $redis->multi();
+    foreach ($seatsInfo as $oneRow){
+        for ($i = 1; $i <= $oneRow['col_numbs']; $i++) {
+            $oneSeat = $oneRow['group_tag'].":"
+                     . $oneRow['row_idx'] . ":" .$i;
+            $redis->rpush($eventSeatsQueueKey, $oneSeat);
+        };
+    }
+    $redis->exec();
 }
 
 echo "ok";

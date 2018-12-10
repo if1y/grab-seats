@@ -110,7 +110,11 @@ class DBHanlder {
             $params = [$params];
         }
         foreach ($params as $k => $value) {
-            $stm->bindValue($k + 1, $value);
+             if (is_numeric($k)) {
+                $stm->bindValue($k + 1, $value);
+            } else {
+                $stm->bindValue($k, $value);
+            }
         }
         $ret = $stm->execute();
         if ($ret === false) {
@@ -126,7 +130,11 @@ class DBHanlder {
             $params = [$params];
         }
         foreach ($params as $k => $value) {
-            $stm->bindValue($k + 1, $value);
+             if (is_numeric($k)) {
+                $stm->bindValue($k + 1, $value);
+            } else {
+                $stm->bindValue($k, $value);
+            }
         }
         $ret = $stm->execute();
         if ($ret === false) {

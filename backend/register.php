@@ -1,17 +1,7 @@
 <?php 
 require_once "common/bootstrap.php";
 
-$authcode = isset($_POST['authcode']) ? $_POST['authcode'] : -1;
-$sessionCode = isset($_SESSION['authcode']) ? $_SESSION['authcode'] : null;
-
-if ($sessionCode) {
-    //验证码只用一次
-    unset($_SESSION['authcode']);
-}
-if ($sessionCode != $authcode) {
-    
-    R(41, "请输入正确验证码");
-}
+checkAuthCode();
 //检查用户
 if (!isset($_POST['account']) || !isset($_POST['password'])) {
     R(42, "请检查参数");
@@ -39,6 +29,7 @@ $salt = genSalt(16);
 $user->row = [
     'id' => genUUID(),
     'account' => $_POST['account'],
+    'is_admin' => 0,
     'password' => passCrypt(encodePassword($_POST['password']), $salt),
     'salt' => $salt,
 ];

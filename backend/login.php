@@ -1,17 +1,7 @@
 <?php 
 require_once "common/bootstrap.php";
 
-$authcode = isset($_POST['authcode']) ? $_POST['authcode'] : -1;
-$sessionCode = isset($_SESSION['authcode']) ? $_SESSION['authcode'] : null;
-
-if ($sessionCode) {
-    //你要重新刷新验证码了
-    unset($_SESSION['authcode']);
-}
-if ($sessionCode != $authcode) {
-    
-    R(41, "请输入正确验证码");
-}
+checkAuthCode();
 
 //检查用户
 if (!isset($_POST['account']) || !isset($_POST['password'])) {

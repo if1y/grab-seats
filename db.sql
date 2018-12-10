@@ -7,6 +7,7 @@ create table `tx_exam`.`tx_users` (
     id char(36) not null primary key,
     account varchar(80) not null comment "帐号",
     password char(32) not null comment "密码",
+    is_admin tinyint not null default 0 comment "是否是管理员",
     salt char(16) not null ,
     created int not null default 0,
     UNIQUE KEY  account(account)
@@ -29,6 +30,7 @@ create table `tx_exam`.`tx_stage_seats`(
     group_tag varchar(10) not null default 'default' comment "作为属于的组",
     row_idx int not null comment "行号",
     col_numbs int not null comment "座位数",
+    opt varchar(2048) not null default "" comment "扩展字段",
     created int not null comment "创建时间",
     key (stage_id)
 ) ENGINE = InnoDB comment = "舞台座位表";

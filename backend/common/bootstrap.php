@@ -8,6 +8,7 @@ require_once "Exceptions.php";
 require_once "DBFactory.php";
 require_once "cache/CacheFactory.php";
 require_once "RedisFactory.php";
+//面向过程的通用函数相关定义
 require_once "common.functions.php";
 //初始化相关
 RedisFactory::init($CFG['redis']);
@@ -30,7 +31,7 @@ function exceptionHandler($e) {
 //set_exception_handler("exceptionHandler");
 
 
-//限速相关
+//单个ip限速，限制刷接口
 $ip = getUserIp();
 rateLimter(ip2long($ip), 10);
 session_start();
