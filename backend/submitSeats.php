@@ -1,32 +1,34 @@
 <?php 
 require_once "common/bootstrap.php";
 $user = assertLogin();
+//$user = ['account' => $_POST['account']];
 $eventId = $_POST['eventId'] ?? "";
+
 $eventInfo = assertEvent($eventId);
 
-//ÓÃ»§ÏëÒªµÄ×ùÎ»Êı
+//ç”¨æˆ·æƒ³è¦çš„åº§ä½æ•°
 $seatsUserWanted = $_POST['num'] ?? 0;
 
-//½Ó¿Ú·ÀË¢£¬¿ØÖÆÃ¿ÃëÖ»ÓĞ2000´ÎÇëÇó£¬È»ºóµÈ´ı2Ãë
+//æ¥å£é˜²åˆ·ï¼Œæ§åˆ¶æ¯ç§’åªæœ‰2000æ¬¡è¯·æ±‚ï¼Œç„¶åç­‰å¾…2ç§’
 /**
  *  $eventRateLimterKey = "g:e:limit:$eventId";
  *  rateLimter($eventRateLimterKey, 2000, 2);
  **/
-if ($eventInfo['seat_per_person'] < $seatsUserWanted) {
-    R(402, "Ã¿ÈË×î¶àÖ»ÄÜ¹ºÂò{$eventInfo['seat_per_person']}ÕÅÆ±", $eventInfo['seat_per_person']);
+if ($eventInfo['seats_per_person'] < $seatsUserWanted) {
+    R(402, "æ¯äººæœ€å¤šåªèƒ½è´­ä¹°{$eventInfo['seats_per_person']}å¼ ç¥¨", $eventInfo['seats_per_person']);
 }
 
 $redis = RedisFactory::getInstance();
 $eventSeatsQueueKey = "queue:$eventId";
 $cnt = $redis->llen($eventSeatsQueueKey);
 if ($cnt < 1 || $cnt < $seatsUserWanted) {
-    R(402, "Ã»ÓĞ¸ü¶à×ùÎ»ÁË", $cnt);
+    R(402, "æ²¡æœ‰æ›´å¤šåº§ä½äº†", $cnt);
 }
 /**
-  1) Ê¹ÓÃredis ¶ÓÁĞ ·ÖÅä×ùÎ»Êı [actiity=>¾ßÌå×ùÎ»±àºÅ]
-     pop 1-5 ÕÅ,Èç¹ûÊ§°Ü£¬ÔòÖØĞÂpush
+  1) ä½¿ç”¨redis é˜Ÿåˆ— åˆ†é…åº§ä½æ•° [actiity=>å…·ä½“åº§ä½ç¼–å·]
+     pop 1-5 å¼ ,å¦‚æœå¤±è´¥ï¼Œåˆ™é‡æ–°push
 **/
-//³¢ÊÔ·ÖÅä,ÏÈ·ÖÅä£¬Æğµ½Ï÷·å×÷ÓÃ
+//å°è¯•åˆ†é…,å…ˆåˆ†é…ï¼Œèµ·åˆ°å‰Šå³°ä½œç”¨
 $seats = [];
 for ($i=1; $i <= $seatsUserWanted; $i++) {
     $seat = $redis->lpop($eventSeatsQueueKey);
@@ -36,32 +38,63 @@ for ($i=1; $i <= $seatsUserWanted; $i++) {
         break;
     }
 }
+if (!$seats) {
+    R(402, "æ²¡æœ‰æ›´å¤šåº§ä½äº†", $cnt);
+}
 /**
- Ö»ÇÀµ½Ò»²¿·Ö
+ åªæŠ¢åˆ°ä¸€éƒ¨åˆ†
 if (count($seats) < $seatsUserWanted) {
-    //²»ÒªÁË,²åÈë»Ø¶ÓÁĞ 
+    //ä¸è¦äº†,æ’å…¥å›é˜Ÿåˆ— 
 }
 **/
 
-//ÂäµØmysql£¬×ö×îÖÕ¼ì²é
-$backToQueue = []; //ĞèÒª·µ»Ø¶ÓÁĞµÄÆ±
+//è½åœ°mysqlï¼Œåšæœ€ç»ˆæ£€æŸ¥
+$backToQueue = []; //éœ€è¦è¿”å›é˜Ÿåˆ—çš„ç¥¨
 $userSeatsEntity = new UserSeatsEntity();
 $userSeatCnt = $userSeatsEntity->getUserSeatCnt($eventId, $user['account']);
-$allowedSeatsCnt = count($seats); //·ÖÅäµÄÆ±Êı
-if ($userSeatCnt + $allowedSeatsCnt > $eventInfo['seat_per_person']) {
-    //¸öÈËÓÃ»§³¬·¢ÁË,ÍÂ»ØÒ»Ğ©Æ±
-    $seatsCanGet = $eventInfo['seat_per_person'] - $allowedSeatsCnt;
-    for ($i = $seatsCanGet -1; $i <  $allowedSeatsCnt; $i++) {
+
+$allowedSeatsCnt = count($seats); //åˆ†é…çš„ç¥¨æ•°
+if ($userSeatCnt['cnt'] >= $eventInfo['seats_per_person']) {
+    //ç”¨æˆ·å·²ç»æŠ¢åˆ°è¶³å¤Ÿå¤šçš„ç¥¨äº†
+    $backToQueue = $seats;
+    $seats = [];
+} else if ($userSeatCnt['cnt'] + $allowedSeatsCnt > $eventInfo['seats_per_person']) {
+    //ä¸ªäººç”¨æˆ·è¶…å‘äº†,åå›ä¸€äº›ç¥¨
+    $seatsCanGet = $eventInfo['seats_per_person'] - $userSeatCnt['cnt'];
+    for ($i = $seatsCanGet; $i <  $allowedSeatsCnt; $i++) {
         $backToQueue[] = array_pop($seats);
     }
 }
 
-//¼ì²éÊı¾İ¿â£¬ÊÇ·ñÒÑ¾­ÓĞÈËÇÀµ½¸Ã×ùÎ»£¬ÀíÂÛÉÏ²»»á
-//¼ì²éÄÄĞ©Æ±ÒÑ¾­ÔÚÊı¾İ¿âÖĞ±»·ÖÅäÁË£¬Õâ²¿·Ö¹ıÂËµô
-$allotedSeats = $userSeatsEntity->getAllotedSeats($eventId, $seats);
-if ($allotedSeats) {
-    //ÕæµÄ³öÏÖÒì³££¬×ùÎ»ÒÑ¾­±»ÓÃ
-    $seats = array_diff($seats, $allotedSeats);
+//æ’å…¥æ•°æ®åº“
+$dbh = DBFactory::getWriteDb();
+$seatGets = 0;
+foreach ($seats as $one) {
+    try {
+        $userSeat = new UserSeatsEntity();
+        $userSeat->row = [
+            "id" => genUUID(),
+            'account' => $user['account'],
+            'seat_info' => $one,
+            'event_id' => $eventId,
+        ];
+        //ä¿å­˜ç”¨æˆ·å¾—åˆ°çš„ç¥¨åˆ°æ•°æ®åº“
+        $userSeat->save();
+        $seatGets ++;
+    } catch (DBException $e) {
+         if ("23000" == $e->getDbErrorCode()) {
+            //é‡å¤é”®ï¼Œè¯´æ˜åº§ä½å·²ç»åˆ†é…è¿‡ï¼Œä¸å¤„ç†
+            
+         } else {
+            //å…¶ä»–æ•°æ®åº“å¼‚å¸¸ï¼Œåº§ä½é‡æ–°æ’å…¥é˜Ÿåˆ—
+            $backToQueue[] = $one;
+            
+         }
+    }
+}
+//å¤šä½™çš„ç¥¨æˆ–å¤±è´¥çš„æ’å›é˜Ÿåˆ—
+foreach ($backToQueue as $one){
+    $redis->rpush($eventSeatsQueueKey, $one);
 }
 
-
+R(0, "ä¸€å…±æŠ¢åˆ°{$seatGets}å¼ ç¥¨", $seatGets);

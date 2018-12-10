@@ -1,11 +1,15 @@
 <?php
 /**
- * ªÒ»° ˝æ›ø‚¡¥Ω”
+ * Ëé∑ÂèñÊï∞ÊçÆÂ∫ìÈìæÊé•
  */
 class DBHanlder {
     
     private $dbh;
 
+    private $errorCode;
+    
+    private $errorInfo;
+    
     public function __construct ($dbCfg) {
         if (!isset($this->dbh)) {
             $dsn = "mysql:dbname={$dbCfg['dbName']};host={$dbCfg['host']}:{$dbCfg['port']}";
@@ -34,7 +38,7 @@ class DBHanlder {
             } catch (PDOException $e) {
                 
                 if (function_exists('addLog')) {
-                    $this->addLog ( 'Connection failed: ' . $e->getMessage());
+                    $this->addLog ( 'Connection failed: ' . $e->getMessage(), 'db_error');
                 }
                 
                
@@ -44,7 +48,7 @@ class DBHanlder {
     }
 
 
-    //≤Â»Î±Ì
+    //ÊèíÂÖ•Ë°®
     function addTableRow($tableName, $arrRow) {
 
         $pdo = $this->dbh;
@@ -70,7 +74,7 @@ class DBHanlder {
             return $pdo->lastInsertId();
         } else {
             $str = json_encode($stm->errorInfo(), JSON_UNESCAPED_UNICODE);
-            $this->addLog ( "insert [{$tableName}] failed: " . $str, "db_error");
+            $this->addLog ( "insert [{$tableName}] failed: " . $str, "db_error" , $stm);
         }
         return false;
     }
@@ -78,6 +82,11 @@ class DBHanlder {
     function getDbError(){
         $pdo = $this->dbh;
         return $pdo->errorInfo();
+    }
+    
+    function getErrorCode() {
+        $pdo = $this->dbh;
+        return $pdo->errorCode();
     }
 
     function fetchRow($sql, $params) {
@@ -96,8 +105,8 @@ class DBHanlder {
         }
         $ret = $stm->execute();
         if ($ret === false) {
-            //÷¥––≥ˆ¥Ì¡À
-            $this->addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error");
+            //ÊâßË°åÂá∫Èîô‰∫Ü
+            $this->addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error", $stm);
 
         }
         return $stm->fetch(PDO::FETCH_ASSOC);
@@ -118,8 +127,8 @@ class DBHanlder {
         }
         $ret = $stm->execute();
         if ($ret === false) {
-            //÷¥––≥ˆ¥Ì¡À
-            $this->addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error");
+            //ÊâßË°åÂá∫Èîô‰∫Ü
+            $this->addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error", $stm);
         }
         return $ret;
     }
@@ -138,9 +147,9 @@ class DBHanlder {
         }
         $ret = $stm->execute();
         if ($ret === false) {
-            //÷¥––≥ˆ¥Ì¡À
+            //ÊâßË°åÂá∫Èîô‰∫Ü
      
-            $this->addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error");
+            $this->addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error", $stm);
 
         }
         return $stm->fetchAll($fetchMode);
@@ -196,9 +205,9 @@ class DBHanlder {
         }
         $ret = $stm->execute();
         if ($ret === false) {
-            //÷¥––≥ˆ¥Ì¡À
+            //ÊâßË°åÂá∫Èîô‰∫Ü
           
-            $this->addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error");
+            $this->addLog("sql[{$sql}],params[".var_export($params, true)."]info[".var_export($stm->errorInfo())."]", "db_error", $stm);
            
         }
         return $ret;
@@ -206,10 +215,29 @@ class DBHanlder {
     }
     
     
-    private function addLog($message, $type) {
-        echo "[$type] {$message} <br/>";
-        throw new DBException(ERR_DB_ERROR, " ˝æ›ø‚“Ï≥£");
+    private function addLog($message, $type, $stm = null) {
+        //echo "[$type] {$message} <br/>";
+        $excp = new DBException(Consts::ERR_DB_ERROR, "Êï∞ÊçÆÂ∫ìÂºÇÂ∏∏");
+        if ($stm) {
+            $excp->setDbErrorInfo($stm->errorInfo());
+            $excp->setDbErrorCode($stm->errorCode());
+        }
+        throw $excp;
     }
     
+    
+    public function beginTransaction() {
+        $pdo = $this->dbh;
+        $pdo->setAttribute(PDO::ATTR_AUTOCOMMIT, false);
+        $pdo->beginTransaction(); // ÂºÄÂêØ‰∏Ä‰∏™‰∫ãÂä°  
+    }
+    
+    public function rollback() {
+        $this->dbh->rollback(); // ÂõûÊªö‰∫ãÂä°
+    }
+    
+    public function commit() {
+         $this->dbh->commit(); // Êèê‰∫§‰∫ãÂä°  
+    }
 
 }

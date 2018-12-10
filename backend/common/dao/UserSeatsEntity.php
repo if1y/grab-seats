@@ -29,7 +29,7 @@ class UserSeatsEntity  extends BaseEntity {
             $conds[] = $one;
         }
         $sql = "select seat_info from {$this->tableName} where event_id = ? "
-             . " and seat_info in (".implode(',', $inS
+             . " and seat_info in (".implode(',', $inS).")";
         
         return $this->getWriteDb->fetchRowAll($sql, $conds);
     }
