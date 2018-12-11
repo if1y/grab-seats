@@ -14,8 +14,8 @@ $seatsUserWanted = $_POST['num'] ?? 0;
  *  $eventRateLimterKey = "g:e:limit:$eventId";
  *  rateLimter($eventRateLimterKey, 2000, 2);
  **/
-if ($eventInfo['seats_per_person'] < $seatsUserWanted) {
-    R(402, "每人最多只能购买{$eventInfo['seats_per_person']}张票", $eventInfo['seats_per_person']);
+if (0 ==$seatsUserWanted || $eventInfo['seats_per_person'] < $seatsUserWanted) {
+    R(402, "每人只能购买1-{$eventInfo['seats_per_person']}张票", $eventInfo['seats_per_person']);
 }
 
 $redis = RedisFactory::getInstance();
@@ -28,7 +28,7 @@ if ($cnt < 1 || $cnt < $seatsUserWanted) {
   1) 使用redis 队列 分配座位数 [actiity=>具体座位编号]
      pop 1-5 张,如果失败，则重新push
 **/
-//尝试分配,先分配，起到削峰作用
+//尝试分配
 $seats = [];
 for ($i=1; $i <= $seatsUserWanted; $i++) {
     $seat = $redis->lpop($eventSeatsQueueKey);
@@ -96,5 +96,13 @@ foreach ($seats as $one) {
 foreach ($backToQueue as $one){
     $redis->rpush($eventSeatsQueueKey, $one);
 }
+
+if (!$seats) {
+    //没有分配到票
+    R(0, "每人最多购买{$eventInfo['seats_per_person']}张票", $eventInfo['seats_per_person']);
+}
+
+$userSeartKey = "us:$eventId:{$user['account']}";
+$redis->del($userSeartKey); //删除用户座位缓存
 
 R(0, "一共抢到{$seatGets}张票", $seatGets);

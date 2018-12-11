@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>首页</title>
+    <link href="bootstrap-3.3.7/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container" >
+        <nav class="navbar navbar-default">
+          <div class="container-fluid">
+          <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="javascript:;">腾讯订票</a>
+        </div>
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right" id="user-info">
+                    <li><a href="login.html">登录</a></li>
+                    <li><a href="register.html">注册</a></li>
+
+              </ul>
+            
+            </div>
+          </div>
+        </nav>
+    
+      
+        <div class="row">
+            <h4>活动列表</h4>
+            <ul class="list-group" id="event-list">
+              
+            </ul>
+         
+        </div>
+    </div>
+
+    <script id="list-item-template" type="text/template">
+        <a href="{{url}}" class="list-group-item">
+                <h4 class="list-group-item-heading">{{name}}</h4>
+                <p class="list-group-item-text">
+                    <div>
+                        时间： {{start_time}}  - {{end_time}}
+                    </div>
+                    <div>
+                        地点： <span>{{stage_name}}</span>
+                    </div>
+                </p>
+              </a>
+    </script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/init.js"></script>
+    <script src="bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script>
+        $(function(){
+            
+            Navi.getUser();
+            
+            //获取活动列表
+            $.get(apiPath+"getActivityList.php",{}, function(data){
+                if (data.code != 0) {
+                    $.alert(data.message);
+                    return ;
+                }
+                var htmlTemplate = $("#list-item-template").html();
+                var html = "";
+                for (var i in  data.data) {
+                    var item = data.data[i];
+                    var fills = {
+                        url: frontEnd+'detail.html?eventId='+item.id,
+                        name: item.name,
+                        start_time: item.start_time,
+                        end_time: item.end_time,
+                        stage_name: item.stage_name
+                    };
+                    html += Template.fill(htmlTemplate, fills);
+                    
+                }
+                html = html == "" ? "没有数据" : html;
+                $("#event-list").html(html);
+            },'json');
+        });
+        
+        
+    </script>
+  </body>
+</html>

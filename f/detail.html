@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>活动详情</title>
+    <link href="bootstrap-3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .label {margin-left:5px;}
+    </style>
+  </head>
+  <body>
+    <div class="container" >
+        <nav class="navbar navbar-default">
+          <div class="container-fluid">
+          <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="javascript:;">腾讯订票</a>
+        </div>
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right" id="user-info">
+                    <li><a href="login.html">登录</a></li>
+                    <li><a href="register.html">注册</a></li>
+              </ul>
+            
+            </div>
+          </div>
+        </nav>
+    
+      
+        <div class="row">
+            <div class="panel panel-info">
+              <div class="panel-heading">
+                <h3 class="panel-title">活动信息</h3>
+              </div>
+              <div class="panel-body">
+              <table class="table">
+                <tr><td>名称</td><td id="name"></td></tr>
+                <tr><td>时间</td><td id="time"></td></tr>
+                <tr><td>地点</td><td id="loca"></td></tr>
+                <tr><td>剩余票数</td><td id="left"></td></tr>
+              </table>
+                
+              </div>
+            </div>
+         
+        </div>
+        <div class="row">
+        <div class="panel panel-default">
+          <div class="panel-heading">已订购的座位</div>
+          <div class="panel-body" id="my-seats">
+         
+          </div>
+          <div class="panel-footer" >
+            <div style="text-align:right;display:none" id="buy-area">
+            可以订购
+            <select id="seats-nums" name="num" ><option>0</option></select>
+            张票
+            <a class="btn btn-primary" id="submit-bnt">订购</a>
+            </div>
+          </div>
+        </div>
+        </div>
+    </div>
+
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/init.js"></script>
+    <script src="bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script>
+        $(function(){
+            
+            //获取登录信息
+            Navi.getUser();
+            canSubmit = true;
+            eventId = Url.getQueryParam("eventId");
+            if (!eventId) {
+                $.alert("参数非法");
+                return ; 
+            }
+            //获取活动列表
+            $.get(apiPath+"getActivityDetails.php",{eventId:eventId}, function(data){
+                if (data.code != 0) {
+                    $.alert(data.message);
+                    return ;
+                }
+                var item = data.data;
+                $("#name").html(item.name);
+                $("#time").html(item.start_time + " 至 " + item.end_time);
+                var place = item.stage_info && item.stage_info.name ? item.stage_info.name: "未知";
+                $("#loca").html(place);
+                $("#left").html(item.seats_left);
+                canSubmit = item.seats_left > 0 ;
+
+                var html = "";
+                if (canSubmit == false) {
+                    //订购置灰
+                    $("#submit-bnt").removeClass("btn-primary").addClass("btn-default");
+                }
+                
+            },'json');
+            
+            //获取用户的座位
+            $.get(apiPath+"getUserSeats.php",{eventId:eventId}, function(data){
+                if (data.code == 32) {
+                    //未登陆
+                    $("#buy-area").html(
+                        "<a target='_blank' href='login.html'>登录</a>才能购票"
+                    ).show();
+                    return ;
+                }
+                if (data.code != 0) {
+                    //其他异常
+                    $("#buy-area").html(
+                        "系统异常，请刷新重试"
+                    ).show();
+                    return ;
+                }
+                $("#buy-area").show();
+            
+                if (data.data.seats_left < 1) {
+                    //不能订票了
+                    canSubmit = false;
+                    $("#submit-bnt").removeClass("btn-primary").addClass("btn-default");
+                }
+                var htm = "";
+                for (var i in data.data.list) {
+                    var infos = data.data.list[i].seat_info.split(":");
+                    var seat = infos[0]+"区" + infos[1]+"排"+infos[2]+"号";
+                    htm += "<span class=\"label label-warning\">"+seat+"</span>";
+                }
+                $("#my-seats").html(htm);
+                if (canSubmit) {
+                    var htm = "";
+                    for (var i=1;i <=data.data.seats_left; i++) {
+                        htm += "<option value='"+i+"'>"+i+"</option>";
+                    }
+                    $("#seats-nums").html(htm);
+                }
+            
+            },'json');
+        });
+        //提交抢票
+        $("#submit-bnt").click(function(){
+            if (canSubmit == false) 
+                return;
+            var num = $("#seats-nums").val();
+            $.post(apiPath+"submitSeats.php", {eventId:eventId,num:num}, function(data){
+                $.alert(data.message);
+                if (data.code == 0) {
+                    location.reload();
+                }
+            },'json');
+        });
+    </script>
+  </body>
+</html>

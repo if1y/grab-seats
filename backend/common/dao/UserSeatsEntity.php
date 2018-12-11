@@ -6,7 +6,7 @@ class UserSeatsEntity  extends BaseEntity {
     protected $_fields = " id,account,event_id,seat_info,created ";
 
     public function getSeatsByUser($eventId, $account) {
-        return $this->fetchList("event_id = ? and account = ?", [$eventId, $account]);
+        return $this->fields('seat_info')->fetchList("event_id = ? and account = ?", [$eventId, $account]);
     }
     
     public function getUserSeatCnt($eventId, $account) {

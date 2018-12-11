@@ -15,6 +15,14 @@ class BaseEntity {
         return $this;
     }
     
+    /**
+     * 指定返回列
+     **/
+    public function fields($fields) {
+        $this->_fields = $fields;
+        return $this;
+    }
+    
     public function setRow($row) {
         $this->row = $row;
         return $this;
